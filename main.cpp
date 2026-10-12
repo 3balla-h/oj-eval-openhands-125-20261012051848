@@ -51,16 +51,13 @@ public:
         if (rootX == rootY) return;
         
         // Union by rank
-        int rankX = rank[rootX];
-        int rankY = rank[rootY];
-        
-        if (rankX < rankY) {
+        if (rank[rootX] < rank[rootY]) {
             parent[rootX] = rootY;
-        } else if (rankX > rankY) {
+        } else if (rank[rootX] > rank[rootY]) {
             parent[rootY] = rootX;
         } else {
             parent[rootY] = rootX;
-            rank[rootX] = rankX + 1;
+            rank[rootX]++;
         }
     }
     
@@ -75,36 +72,41 @@ int main() {
     while (t--) {
         int n = readInt();
         
-        // Process constraints directly without storing them
-        UnionFind uf;
-        bool valid = true;
+        // Store equality and inequality constraints
+        vector<pair<int, int>> equals;
+        vector<pair<int, int>> not_equals;
         
+        // Read all constraints
         for (int i = 0; i < n; i++) {
             int x = readInt();
             int y = readInt();
             int e = readInt();
             
             if (e == 1) {
-                // Equality constraint: x = y
-                uf.unite(x, y);
+                equals.push_back({x, y});
             } else {
-                // Inequality constraint: x != y
-                // We can't process inequality constraints immediately
-                // Store them for later checking
-                if (valid && uf.connected(x, y)) {
-                    valid = false;
-                }
+                not_equals.push_back({x, y});
             }
         }
         
-        // If we already found a contradiction, output NO
-        if (!valid) {
-            puts("NO");
-            continue;
+        // Use Union-Find to process all equality constraints
+        UnionFind uf;
+        
+        // First, process all equality constraints
+        for (auto& p : equals) {
+            uf.unite(p.first, p.second);
         }
         
-        // All inequality constraints were checked during input processing
-        puts("YES");
+        // Check if any inequality constraint violates the equivalence classes
+        bool valid = true;
+        for (auto& p : not_equals) {
+            if (uf.connected(p.first, p.second)) {
+                valid = false;
+                break;
+            }
+        }
+        
+        puts(valid ? "YES" : "NO");
     }
     
     return 0;
