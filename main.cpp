@@ -31,17 +31,27 @@ private:
     
 public:
     int find(int x) {
-        auto it = parent.find(x);
-        if (it == parent.end()) {
+        // Direct access - if not found, create new entry
+        if (parent[x] == 0 && rank.find(x) == rank.end()) {
             parent[x] = x;
             rank[x] = 0;
             return x;
         }
         
-        if (parent[x] != x) {
-            parent[x] = find(parent[x]); // Path compression
+        // Path compression with iterative approach to avoid deep recursion
+        int root = x;
+        while (parent[root] != root) {
+            root = parent[root];
         }
-        return parent[x];
+        
+        // Compress path
+        while (parent[x] != x) {
+            int next = parent[x];
+            parent[x] = root;
+            x = next;
+        }
+        
+        return root;
     }
     
     void unite(int x, int y) {
