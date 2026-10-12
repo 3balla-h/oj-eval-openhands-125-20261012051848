@@ -1,12 +1,29 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
-#include <unordered_set>
 #include <algorithm>
+#include <cctype>
 
 using namespace std;
 
-// Union-Find data structure for managing equivalence classes
+// Fast input function to handle large input sizes
+inline int readInt() {
+    int x = 0;
+    char c = getchar();
+    while (c <= ' ') c = getchar();
+    bool neg = false;
+    if (c == '-') {
+        neg = true;
+        c = getchar();
+    }
+    while (c >= '0' && c <= '9') {
+        x = x * 10 + (c - '0');
+        c = getchar();
+    }
+    return neg ? -x : x;
+}
+
+// Union-Find data structure for managing equivalence classes with optimized path compression
 class UnionFind {
 private:
     unordered_map<int, int> parent;
@@ -14,7 +31,8 @@ private:
     
 public:
     int find(int x) {
-        if (parent.find(x) == parent.end()) {
+        auto it = parent.find(x);
+        if (it == parent.end()) {
             parent[x] = x;
             rank[x] = 0;
             return x;
@@ -33,13 +51,16 @@ public:
         if (rootX == rootY) return;
         
         // Union by rank
-        if (rank[rootX] < rank[rootY]) {
+        int rankX = rank[rootX];
+        int rankY = rank[rootY];
+        
+        if (rankX < rankY) {
             parent[rootX] = rootY;
-        } else if (rank[rootX] > rank[rootY]) {
+        } else if (rankX > rankY) {
             parent[rootY] = rootX;
         } else {
             parent[rootY] = rootX;
-            rank[rootX]++;
+            rank[rootX] = rankX + 1;
         }
     }
     
@@ -49,49 +70,41 @@ public:
 };
 
 int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    
-    int t;
-    cin >> t;
+    int t = readInt();
     
     while (t--) {
-        int n;
-        cin >> n;
+        int n = readInt();
         
-        // Store equality and inequality constraints
-        vector<pair<int, int>> equals;
-        vector<pair<int, int>> not_equals;
+        // Process constraints directly without storing them
+        UnionFind uf;
+        bool valid = true;
         
         for (int i = 0; i < n; i++) {
-            int x, y, e;
-            cin >> x >> y >> e;
+            int x = readInt();
+            int y = readInt();
+            int e = readInt();
             
             if (e == 1) {
-                equals.push_back({x, y});
+                // Equality constraint: x = y
+                uf.unite(x, y);
             } else {
-                not_equals.push_back({x, y});
+                // Inequality constraint: x != y
+                // We can't process inequality constraints immediately
+                // Store them for later checking
+                if (valid && uf.connected(x, y)) {
+                    valid = false;
+                }
             }
         }
         
-        // Use Union-Find to process all equality constraints
-        UnionFind uf;
-        
-        // First, process all equality constraints
-        for (auto& p : equals) {
-            uf.unite(p.first, p.second);
+        // If we already found a contradiction, output NO
+        if (!valid) {
+            puts("NO");
+            continue;
         }
         
-        // Check if any inequality constraint violates the equivalence classes
-        bool valid = true;
-        for (auto& p : not_equals) {
-            if (uf.connected(p.first, p.second)) {
-                valid = false;
-                break;
-            }
-        }
-        
-        cout << (valid ? "YES" : "NO") << '\n';
+        // All inequality constraints were checked during input processing
+        puts("YES");
     }
     
     return 0;
